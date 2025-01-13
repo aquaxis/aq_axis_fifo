@@ -24,6 +24,10 @@ module tb_aq_axis_fifo;
   end
 
   initial begin
+    $display("========================================");
+    $display("Simulation Start");
+    $display("========================================");
+
     #0;
     RST   = 1;
     WRCLK = 0;
@@ -41,11 +45,15 @@ module tb_aq_axis_fifo;
   wire AEMPTY, EMPTY;
   wire [31:0] DOUT;
 
+  reg ERROR;
+  reg [31:0] TEMP;
+
   integer i, k;
 
   integer write_end;
 
   initial begin
+    ERROR = 0;
     #0;
     WREN = 0;
 
@@ -53,38 +61,51 @@ module tb_aq_axis_fifo;
 
     wait (!RST);
 
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+
+    $display("1st write");
 
     for (i = 0; i < 20; i = i + 1) begin
       WREN = 1;
       DIN  = 32'h00000000 + i;
-      @(negedge WRCLK);
+      @(posedge WRCLK) #1;
     end
 
     WREN = 0;
     DIN  = 64'd0;
-    @(negedge WRCLK);
+    @(posedge WRCLK) #1;
 
     write_end = 1;
 
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
-    @(negedge WRCLK);
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
 
     write_end = 0;
 
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+    @(posedge WRCLK) #1;
+
     wait (EMPTY);
+    wait (!FULL);
+
+    $display("2nd write");
+
+    @(posedge WRCLK) #1;
 
     for (i = 0; i < 20; i = i + 1) begin
       WREN = 1;
-      DIN  = 32'h00000000 + i;
-      @(negedge WRCLK);
+      DIN  = 32'h00000100 + i;
+      @(posedge WRCLK) #1;
       if (i == 8) begin
         write_end = 1;
       end
@@ -92,7 +113,7 @@ module tb_aq_axis_fifo;
 
     WREN = 0;
     DIN  = 64'd0;
-    @(negedge WRCLK);
+    @(posedge WRCLK) #1;
 
 
   end
@@ -103,50 +124,74 @@ module tb_aq_axis_fifo;
 
     wait (!RST);
 
-    @(negedge RDCLK);
+    @(posedge RDCLK) #1;
 
     wait (write_end);
 
-    @(negedge RDCLK);
+    @(posedge RDCLK) #1;
 
+    $display("1st read");
     for (k = 0; k < 20; k = k + 1) begin
       RDEN = 1;
-      if (!EMPTY && (DOUT != (32'h00000000 + k)))
-        $display("ERROR: %16h:%16h", 32'h00000000 + k, DOUT);
-      @(negedge RDCLK);
+      TEMP = (32'h00000000 + k);
+      if (!EMPTY && (DOUT != TEMP)) begin
+        $display("ERROR: %16h:%16h", TEMP, DOUT);
+        ERROR = 1;
+      end else begin
+        ERROR = 0;
+      end
+      @(posedge RDCLK) #1;
     end
 
     RDEN = 0;
-    @(negedge RDCLK);
+    @(posedge RDCLK) #1;
 
 
     wait (write_end);
 
-    @(negedge RDCLK);
+    @(posedge RDCLK) #1;
 
-    for (k = 0; k < 20; k = k + 1) begin
-      RDEN = 1;
-      if (!EMPTY && (DOUT != (32'h00000000 + k)))
-        $display("ERROR: %16h:%16h", 32'h00000000 + k, DOUT);
-      @(negedge RDCLK);
+    $display("2nd read");
+    k = 0;
+    while (k < 16) begin
+      if (!EMPTY) begin
+        RDEN = 1;
+        TEMP = (32'h00000100 + k);
+        k = k + 1;
+        if (!EMPTY && (DOUT != TEMP)) begin
+          $display("ERROR: %16h:%16h", TEMP, DOUT);
+          ERROR = 1;
+        end else begin
+          ERROR = 0;
+        end
+      end else begin
+        ERROR = 0;
+        RDEN  = 0;
+      end
+      @(posedge RDCLK) #1;
     end
+    ERROR = 0;
 
-    RDEN = 0;
-    @(negedge RDCLK);
+    RDEN  = 0;
+    @(posedge RDCLK) #1;
 
 
 
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
-    @(negedge RDCLK);
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
+    @(posedge RDCLK) #1;
 
+
+    $display("========================================");
+    $display("Simulation Finish");
+    $display("========================================");
 
     $finish();
 
