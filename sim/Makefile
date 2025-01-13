@@ -26,7 +26,7 @@ sim: $(SRC_FILES)
 	$(XELAB) $(TOP) --debug all -timescale 1ns/1ps
 
 clean:
-	rm -rf *.log *.jou *.pb xsim.dir *.sh *.wdb .Xil *.tcl
+	rm -rf *.log *.jou *.str *.pb xsim.dir *.sh *.wdb .Xil *.tcl
 
 ./dump.tcl:
 	echo 'log_wave -r *'  > $@
