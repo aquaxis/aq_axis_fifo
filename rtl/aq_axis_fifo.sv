@@ -10,30 +10,32 @@
  *  URI:    http://www.aquaxis.com/
  *  E-Mail: info(at)aquaxis.com
  */
+`default_nettype none
+
 module aq_axis_fifo #(
-    parameter FIFO_DEPTH = 10,
-    parameter FIFO_WIDTH = 64
+    parameter FIFO_DEPTH = 8,
+    parameter FIFO_WIDTH = 32
 ) (
-    input RST_N,
+    input wire RST_N,
 
-    input                    S_AXIS_ACLK,
-    input                    S_AXIS_TVALID,
-    output                   S_AXIS_TREADY,
-    input                    S_AXIS_TLAST,
-    input  [FIFO_WIDTH -1:0] S_AXIS_TDATA,
+    input  wire                   S_AXIS_ACLK,
+    input  wire                   S_AXIS_TVALID,
+    output wire                   S_AXIS_TREADY,
+    input  wire                   S_AXIS_TLAST,
+    input  wire [FIFO_WIDTH -1:0] S_AXIS_TDATA,
 
-    output                   FIFO_WR_FULL,
-    output                   FIFO_WR_ALM_FULL,
-    input  [FIFO_DEPTH -1:0] FIFO_WR_ALM_COUNT,
+    output wire                   FIFO_WR_FULL,
+    output wire                   FIFO_WR_ALM_FULL,
+    input  wire [FIFO_DEPTH -1:0] FIFO_WR_ALM_COUNT,
 
-    input                    M_AXIS_ACLK,
-    output                   M_AXIS_TVALID,
-    input                    M_AXIS_TREADY,
-    output [FIFO_WIDTH -1:0] M_AXIS_TDATA,
+    input  wire                   M_AXIS_ACLK,
+    output wire                   M_AXIS_TVALID,
+    input  wire                   M_AXIS_TREADY,
+    output wire [FIFO_WIDTH -1:0] M_AXIS_TDATA,
 
-    output                   FIFO_RD_EMPTY,
-    output                   FIFO_RD_ALM_EMPTY,
-    input  [FIFO_DEPTH -1:0] FIFO_RD_ALM_COUNT
+    output wire                   FIFO_RD_EMPTY,
+    output wire                   FIFO_RD_ALM_EMPTY,
+    input  wire [FIFO_DEPTH -1:0] FIFO_RD_ALM_COUNT
 );
 
   reg [1:0] reg_wr_rst_n, reg_rd_rst_n;
@@ -54,7 +56,6 @@ module aq_axis_fifo #(
   reg                    wr_rd_ena;
   reg  [            2:0] wr_rd_ena_d;
   wire                   wr_rd_ena_ack;
-  reg                    wr_rd_empty;
   reg  [FIFO_DEPTH -1:0] wr_adrs;
   reg [FIFO_DEPTH : 0] wr_count, wr_alm_count, wr_count_req_pre, wr_count_req, wr_rd_count;
 
@@ -64,7 +65,6 @@ module aq_axis_fifo #(
   reg                    rd_wr_ena;
   reg  [            2:0] rd_wr_ena_d;
   wire                   rd_wr_ena_ack;
-  reg                    rd_wr_full;
   reg  [FIFO_DEPTH -1:0] rd_adrs;
   reg [FIFO_DEPTH : 0] rd_count, rd_alm_count, rd_count_req_pre, rd_count_req, rd_wr_count;
 
@@ -103,7 +103,7 @@ module aq_axis_fifo #(
       end else if (wr_rd_ena) begin
         wr_count <= wr_count - wr_rd_count;
       end
-      wr_alm_count <= wr_count + {1'b0, FIFO_WR_ALM_COUNT};
+      wr_alm_count <= wr_count + {1'b0, FIFO_WR_ALM_COUNT} + 1;
     end
   end
 
@@ -112,14 +112,12 @@ module aq_axis_fifo #(
     if (!wr_rst_n) begin
       wr_rd_count      <= {(FIFO_DEPTH + 1) {1'b0}};
       wr_rd_ena_d[2:0] <= 3'd0;
-      wr_rd_empty      <= 1'b0;
       wr_rd_ena        <= 1'b0;
     end else begin
       wr_rd_ena_d[2:0] <= {wr_rd_ena_d[1:0], rd_ena_req};
       if (wr_rd_ena_d[2:1] == 2'b01) begin
         wr_rd_ena   <= 1'b1;
         wr_rd_count <= rd_count_req;
-        wr_rd_empty <= rd_empty;
       end else begin
         wr_rd_ena <= 1'b0;
       end
@@ -198,7 +196,7 @@ module aq_axis_fifo #(
       end else if (rd_wr_ena) begin
         rd_count <= rd_count + rd_wr_count;
       end
-      rd_alm_count <= rd_count - {1'b0, FIFO_RD_ALM_COUNT};
+      rd_alm_count <= rd_count - {1'b0, FIFO_RD_ALM_COUNT} - 1;
     end
   end
 
@@ -207,14 +205,12 @@ module aq_axis_fifo #(
     if (!rd_rst_n) begin
       rd_wr_ena_d[2:0] <= 3'd0;
       rd_wr_count      <= {(FIFO_DEPTH + 1) {1'b0}};
-      rd_wr_full       <= 1'b0;
       rd_wr_ena        <= 1'b0;
     end else begin
       rd_wr_ena_d[2:0] <= {rd_wr_ena_d[1:0], wr_ena_req};
       if (rd_wr_ena_d[2:1] == 2'b01) begin
         rd_wr_ena   <= 1'b1;
         rd_wr_count <= wr_count_req;
-        rd_wr_full  <= wr_count[FIFO_DEPTH];
       end else begin
         rd_wr_ena <= 1'b0;
       end
@@ -301,29 +297,4 @@ module aq_axis_fifo #(
 
 endmodule
 
-module aq_fifo_ram #(
-    parameter DEPTH = 12,
-    parameter WIDTH = 32
-) (
-    input              WR_CLK,
-    input              WR_ENA,
-    input [DEPTH -1:0] WR_ADRS,
-    input [WIDTH -1:0] WR_DATA,
-
-    input               RD_CLK,
-    input  [DEPTH -1:0] RD_ADRS,
-    output [WIDTH -1:0] RD_DATA
-);
-  reg [WIDTH -1:0]    ram [0:(2**DEPTH) -1];
-  reg [WIDTH -1:0]    rd_reg;
-
-  always @(posedge WR_CLK) begin
-    if (WR_ENA) ram[WR_ADRS] <= WR_DATA;
-  end
-
-  always @(posedge RD_CLK) begin
-    rd_reg <= ram[RD_ADRS];
-  end
-
-  assign RD_DATA = rd_reg;
-endmodule
+`default_nettype wire

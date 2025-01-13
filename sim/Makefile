@@ -23,11 +23,14 @@ sim: $(SRC_FILES)
 	$(XELAB) $(TOP) --debug all -timescale 1ns/1ps
 
 clean:
-	rm -rf *.log *.jou *.pb xsim.dir *.sh *.wdb .Xil dump.tcl
+	rm -rf *.log *.jou *.pb xsim.dir *.sh *.wdb .Xil dump.tcl start.tcl
 
 ./dump.tcl:
 	echo 'log_wave -r *'  > $@
 	echo 'run all'       >> $@
 
 ./start.tcl:
-	echo 'create_wave_config; add_wave /; set_property needs_save false [current_wave_config]' > $@
+	echo 'create_wave_config;' > $@
+	echo 'add_wave /;' >> $@
+	echo 'set_property needs_save false [current_wave_config];' >> $@
+	echo 'run 10 us;' >> $@
