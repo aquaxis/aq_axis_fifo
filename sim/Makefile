@@ -9,8 +9,11 @@ SRC_FILES := $(shell ls $(SRC_DIR)/*.sv) $(shell ls $(SRC_DIR)/*.v) $(shell ls $
 
 TOP := tb_aq_axis_fifo
 
-gui: sim ./start.tcl
+gui: clean sim ./start.tcl
 	$(XSIM) $(TOP) -gui -t ./start.tcl
+
+cli: clean sim ./cli.tcl
+	$(XSIM) $(TOP) -t ./cli.tcl
 
 dump: sim ./dump.tcl
 	$(XSIM) $(TOP) -t ./dump.tcl -wdb dump.wdb
@@ -23,7 +26,7 @@ sim: $(SRC_FILES)
 	$(XELAB) $(TOP) --debug all -timescale 1ns/1ps
 
 clean:
-	rm -rf *.log *.jou *.pb xsim.dir *.sh *.wdb .Xil dump.tcl start.tcl
+	rm -rf *.log *.jou *.pb xsim.dir *.sh *.wdb .Xil *.tcl
 
 ./dump.tcl:
 	echo 'log_wave -r *'  > $@
@@ -34,3 +37,7 @@ clean:
 	echo 'add_wave /;' >> $@
 	echo 'set_property needs_save false [current_wave_config];' >> $@
 	echo 'run 10 us;' >> $@
+
+./cli.tcl: ./start.tcl 
+	cat start.tcl > $@
+	echo 'exit;' >> $@
