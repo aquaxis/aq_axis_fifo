@@ -1,4 +1,4 @@
-# AXI Slave FIFO
+# FIFO with AXI-Lite Slave
 
 AXI Slave FIFO
 
