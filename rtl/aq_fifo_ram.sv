@@ -16,11 +16,12 @@ module aq_fifo_ram #(
     parameter DEPTH = 8,
     parameter WIDTH = 32
 ) (
-    input wire              WR_CLK,
-    input wire              WR_ENA,
-    input wire [DEPTH -1:0] WR_ADRS,
-    input wire [WIDTH -1:0] WR_DATA,
-
+    // Write Interface
+    input  wire              WR_CLK,
+    input  wire              WR_ENA,
+    input  wire [DEPTH -1:0] WR_ADRS,
+    input  wire [WIDTH -1:0] WR_DATA,
+    // Read Interface
     input  wire              RD_CLK,
     input  wire [DEPTH -1:0] RD_ADRS,
     output wire [WIDTH -1:0] RD_DATA

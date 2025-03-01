@@ -16,23 +16,24 @@ module aq_axis_fifo #(
     parameter FIFO_DEPTH = 8,
     parameter FIFO_WIDTH = 32
 ) (
-    input wire RST_N,
-
+    // System
+    input  wire                   RST_N,
+    // AXIS Slave Interface(FIFO Write Interface)
     input  wire                   S_AXIS_ACLK,
     input  wire                   S_AXIS_TVALID,
     output wire                   S_AXIS_TREADY,
     input  wire                   S_AXIS_TLAST,
     input  wire [FIFO_WIDTH -1:0] S_AXIS_TDATA,
-
+    // FIFO Write Status
     output wire                   FIFO_WR_FULL,
     output wire                   FIFO_WR_ALM_FULL,
     input  wire [FIFO_DEPTH -1:0] FIFO_WR_ALM_COUNT,
-
+    // AXIS Master Interface(FIFO Read Interface)
     input  wire                   M_AXIS_ACLK,
     output wire                   M_AXIS_TVALID,
     input  wire                   M_AXIS_TREADY,
     output wire [FIFO_WIDTH -1:0] M_AXIS_TDATA,
-
+    // FIFO Read Status
     output wire                   FIFO_RD_EMPTY,
     output wire                   FIFO_RD_ALM_EMPTY,
     input  wire [FIFO_DEPTH -1:0] FIFO_RD_ALM_COUNT
